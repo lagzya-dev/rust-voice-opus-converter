@@ -4,8 +4,8 @@
         xmlns:local="clr-namespace:OpusConverter.Gui"
         Title="Opus Converter — аудио для голосового чата Rust"
         Width="1080" Height="820" MinWidth="940" MinHeight="660"
-        Background="{StaticResource WindowBrush}"
-        FontFamily="Segoe UI" FontSize="13" Foreground="{StaticResource TextBrush}"
+        Background="{DynamicResource WindowBrush}"
+        FontFamily="Segoe UI" FontSize="13" Foreground="{DynamicResource TextBrush}"
         UseLayoutRounding="True" TextOptions.TextFormattingMode="Ideal"
         AllowDrop="True" DragEnter="Window_DragOver" DragOver="Window_DragOver" DragLeave="Window_DragLeave" Drop="Window_Drop"
         PreviewKeyDown="Window_PreviewKeyDown" Closing="Window_Closing" Loaded="Window_Loaded">
@@ -16,18 +16,18 @@
         <local:EmptyToCollapsedConverter x:Key="EmptyToCollapsed"/>
 
         <Style x:Key="StatusText" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource MutedBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource MutedBrush}"/>
             <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
             <Setter Property="FontSize" Value="12"/>
             <Style.Triggers>
                 <DataTrigger Binding="{Binding State}" Value="Done">
-                    <Setter Property="Foreground" Value="{StaticResource OkBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource OkBrush}"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding State}" Value="Failed">
-                    <Setter Property="Foreground" Value="{StaticResource ErrorBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding State}" Value="Working">
-                    <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
                 </DataTrigger>
             </Style.Triggers>
         </Style>
@@ -42,23 +42,23 @@
                 </Grid.ColumnDefinitions>
 
                 <TextBlock Grid.Column="0" Text="{Binding Icon}" FontFamily="{StaticResource IconFont}" FontSize="18"
-                           Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center"/>
+                           Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center"/>
 
                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,12,0">
                     <StackPanel Orientation="Horizontal">
                         <TextBox Text="{Binding Name, UpdateSourceTrigger=LostFocus}" IsEnabled="{Binding IsEditable}"
                                  MinWidth="60" MaxWidth="330" Padding="6,3" BorderThickness="0" Background="Transparent" FontWeight="SemiBold"
                                  ToolTip="Имя файла. Именно его вводят в игре: /vplay имя"/>
-                        <TextBlock Text=".rvoice" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" Margin="0,0,0,1"/>
+                        <TextBlock Text=".rvoice" Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" Margin="0,0,0,1"/>
                     </StackPanel>
-                    <TextBlock Text="{Binding Source}" ToolTip="{Binding Source}" Foreground="{StaticResource MutedBrush}" FontSize="11.5"
+                    <TextBlock Text="{Binding Source}" ToolTip="{Binding Source}" Foreground="{DynamicResource MutedBrush}" FontSize="11.5"
                                TextTrimming="CharacterEllipsis" Margin="6,0,0,0"/>
                 </StackPanel>
 
                 <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,10,0" ToolTip="{Binding ErrorDetail}">
                     <Grid>
                         <TextBlock Text="{Binding StatusText}" Style="{StaticResource StatusText}" HorizontalAlignment="Left"/>
-                        <TextBlock Text="{Binding Info}" Foreground="{StaticResource MutedBrush}" FontSize="12" HorizontalAlignment="Right"/>
+                        <TextBlock Text="{Binding Info}" Foreground="{DynamicResource MutedBrush}" FontSize="12" HorizontalAlignment="Right"/>
                     </Grid>
                     <ProgressBar Value="{Binding Progress, Mode=OneWay}" IsIndeterminate="{Binding IsIndeterminate}" Margin="0,5,0,0"
                                  Visibility="{Binding ShowProgress, Converter={StaticResource BoolToVis}}"/>
@@ -101,15 +101,28 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <StackPanel Grid.Row="0" Margin="24,18,24,12">
-            <TextBlock Text="Opus Converter" FontSize="24" FontWeight="Bold"/>
-            <TextBlock Text="Любое аудио, видео или прямая ссылка → файл .rvoice для плагина OpusVoice (голосовой чат Rust)"
-                       Foreground="{StaticResource MutedBrush}" Margin="0,2,0,0"/>
-        </StackPanel>
+        <Grid Grid.Row="0" Margin="24,18,24,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="Opus Converter" FontSize="24" FontWeight="Bold"/>
+                <TextBlock Text="Любое аудио, видео или прямая ссылка → файл .rvoice для плагина OpusVoice (голосовой чат Rust)"
+                           Foreground="{DynamicResource MutedBrush}" Margin="0,2,0,0"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" ToolTip="Тёмная/светлая тема">
+                <TextBlock Text="&#xE706;" FontFamily="{StaticResource IconFont}" FontSize="13" VerticalAlignment="Center"
+                           Foreground="{DynamicResource MutedBrush}" Margin="0,0,6,0"/>
+                <CheckBox Style="{StaticResource ThemeSwitch}" IsChecked="{Binding IsDarkTheme}"/>
+                <TextBlock Text="&#xEC46;" FontFamily="{StaticResource IconFont}" FontSize="13" VerticalAlignment="Center"
+                           Foreground="{DynamicResource MutedBrush}" Margin="6,0,0,0"/>
+            </StackPanel>
+        </Grid>
 
         <!-- ffmpeg warning -->
-        <Border Grid.Row="1" Margin="24,0,24,12" Padding="14,10" CornerRadius="10" Background="{StaticResource WarnBackBrush}"
-                BorderBrush="{StaticResource WarnLineBrush}" BorderThickness="1"
+        <Border Grid.Row="1" Margin="24,0,24,12" Padding="14,10" CornerRadius="10" Background="{DynamicResource WarnBackBrush}"
+                BorderBrush="{DynamicResource WarnLineBrush}" BorderThickness="1"
                 Visibility="{Binding FfmpegMissing, Converter={StaticResource BoolToVis}}">
             <DockPanel>
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
@@ -118,8 +131,8 @@
                 </StackPanel>
                 <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
                     <TextBlock Text="Не найден ffmpeg — он нужен, чтобы читать mp3, mp4 и другие форматы" FontWeight="SemiBold"
-                               Foreground="{StaticResource WarnTextBrush}"/>
-                    <TextBlock Foreground="{StaticResource WarnTextBrush}" TextWrapping="Wrap" Margin="0,2,0,0"
+                               Foreground="{DynamicResource WarnTextBrush}"/>
+                    <TextBlock Foreground="{DynamicResource WarnTextBrush}" TextWrapping="Wrap" Margin="0,2,0,0"
                                Text="Установите его (winget install Gyan.FFmpeg) или положите ffmpeg.exe рядом с программой, либо укажите путь к нему."/>
                 </StackPanel>
             </DockPanel>
@@ -158,7 +171,7 @@
                                 <TextBlock Text="Добавить папку"/>
                             </StackPanel>
                         </Button>
-                        <TextBlock Text="или перетащите их в окно" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                        <TextBlock Text="или перетащите их в окно" Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" Margin="12,0,0,0"/>
                     </StackPanel>
 
                     <Grid Grid.Row="2" Margin="0,10,0,12" IsEnabled="{Binding CanEdit}">
@@ -169,7 +182,7 @@
                         <Grid>
                             <TextBox x:Name="LinkBox" KeyDown="LinkBox_KeyDown" Padding="12,8"/>
                             <TextBlock Text="Вставьте прямую ссылку на файл (https://…/song.mp3) и нажмите Enter" IsHitTestVisible="False"
-                                       Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" Margin="14,0,0,0">
+                                       Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" Margin="14,0,0,0">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="Visibility" Value="Collapsed"/>
@@ -191,11 +204,11 @@
                                  HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled"/>
                         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
                                     Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVis}}">
-                            <TextBlock Text="&#xE8D6;" FontFamily="{StaticResource IconFont}" FontSize="40" Foreground="{StaticResource LineStrongBrush}"
+                            <TextBlock Text="&#xE8D6;" FontFamily="{StaticResource IconFont}" FontSize="40" Foreground="{DynamicResource LineStrongBrush}"
                                        HorizontalAlignment="Center"/>
-                            <TextBlock Text="Список пуст" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource MutedBrush}"
+                            <TextBlock Text="Список пуст" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource MutedBrush}"
                                        HorizontalAlignment="Center" Margin="0,8,0,2"/>
-                            <TextBlock Text="Перетащите сюда mp3, wav, mp4… или вставьте ссылку" Foreground="{StaticResource MutedBrush}"
+                            <TextBlock Text="Перетащите сюда mp3, wav, mp4… или вставьте ссылку" Foreground="{DynamicResource MutedBrush}"
                                        HorizontalAlignment="Center"/>
                         </StackPanel>
                     </Grid>
@@ -227,7 +240,7 @@
                         <TextBlock Text="Качество звука" Style="{StaticResource FieldLabel}"/>
                         <Slider Minimum="16" Maximum="128" TickFrequency="8" IsSnapToTickEnabled="True" SmallChange="8" LargeChange="16"
                                 Value="{Binding BitrateKbps}"/>
-                        <TextBlock Text="{Binding BitrateText}" Foreground="{StaticResource MutedBrush}" FontSize="12"/>
+                        <TextBlock Text="{Binding BitrateText}" Foreground="{DynamicResource MutedBrush}" FontSize="12"/>
 
                         <TextBlock Text="Тип звука" Style="{StaticResource FieldLabel}"/>
                         <WrapPanel>
@@ -257,15 +270,15 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <StackPanel>
-                                <TextBlock Text="Начало" Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,0,0,4"/>
+                                <TextBlock Text="Начало" Foreground="{DynamicResource MutedBrush}" FontSize="12" Margin="0,0,0,4"/>
                                 <TextBox Text="{Binding Start, UpdateSourceTrigger=PropertyChanged}" ToolTip="Секунды (30) или время (1:30)"/>
                             </StackPanel>
                             <StackPanel Grid.Column="2">
-                                <TextBlock Text="Длительность" Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,0,0,4"/>
+                                <TextBlock Text="Длительность" Foreground="{DynamicResource MutedBrush}" FontSize="12" Margin="0,0,0,4"/>
                                 <TextBox Text="{Binding Duration, UpdateSourceTrigger=PropertyChanged}" ToolTip="Секунды (30) или время (1:30)"/>
                             </StackPanel>
                         </Grid>
-                        <TextBlock Text="{Binding TrimError}" Foreground="{StaticResource ErrorBrush}" TextWrapping="Wrap" Margin="0,6,0,0" FontSize="12"/>
+                        <TextBlock Text="{Binding TrimError}" Foreground="{DynamicResource ErrorBrush}" TextWrapping="Wrap" Margin="0,6,0,0" FontSize="12"/>
                         <TextBlock Style="{StaticResource Hint}" Text="Например: начало 1:30, длительность 20 — вырежет 20 секунд начиная с 1:30."/>
                     </StackPanel>
                 </ScrollViewer>
@@ -302,11 +315,11 @@
 
         <!-- Drag & drop overlay -->
         <Border x:Name="DropOverlay" Grid.RowSpan="5" Visibility="Collapsed" IsHitTestVisible="False" Margin="12" CornerRadius="16"
-                Background="#E6EEF2FF" BorderBrush="{StaticResource AccentBrush}" BorderThickness="3">
+                Background="#E6EEF2FF" BorderBrush="{DynamicResource AccentBrush}" BorderThickness="3">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                <TextBlock Text="&#xE896;" FontFamily="{StaticResource IconFont}" FontSize="48" Foreground="{StaticResource AccentBrush}"
+                <TextBlock Text="&#xE896;" FontFamily="{StaticResource IconFont}" FontSize="48" Foreground="{DynamicResource AccentBrush}"
                            HorizontalAlignment="Center"/>
-                <TextBlock Text="Отпустите, чтобы добавить в список" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}"
+                <TextBlock Text="Отпустите, чтобы добавить в список" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource AccentBrush}"
                            Margin="0,10,0,0"/>
             </StackPanel>
         </Border>

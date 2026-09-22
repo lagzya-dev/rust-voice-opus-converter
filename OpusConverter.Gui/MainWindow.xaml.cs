@@ -19,6 +19,10 @@ public partial class MainWindow : Window
         InitializeComponent();
         DataContext = _vm;
         SyncChips();
+
+        // The window has no native handle yet at construction time (ThemeManager.Apply, run from the view model's
+        // constructor above, could only theme the palette) - color the title bar itself once one exists.
+        SourceInitialized += (_, _) => ThemeManager.ApplyTitleBar(this, ThemeManager.IsDark);
     }
 
     // ---- startup / shutdown --------------------------------------------------------------------------------------------

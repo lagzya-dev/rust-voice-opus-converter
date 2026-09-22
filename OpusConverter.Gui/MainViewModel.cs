@@ -26,6 +26,7 @@ public sealed class MainViewModel : ObservableObject
     private string _outputDirectory;
     private bool _outputIsTemporary;
     private int _bitrateKbps;
+    private bool _isDarkTheme;
     private bool _voiceMode;
     private double _volumePercent;
     private bool _normalize;
@@ -43,9 +44,12 @@ public sealed class MainViewModel : ObservableObject
         _settings = AppSettings.Load();
         _outputDirectory = _settings.OutputDirectory;
         _bitrateKbps = _settings.BitrateKbps;
+        _isDarkTheme = _settings.DarkTheme;
         _voiceMode = _settings.VoiceMode;
         _volumePercent = _settings.VolumePercent;
         _normalize = _settings.Normalize;
+
+        ThemeManager.Apply(_isDarkTheme);
 
         Jobs.CollectionChanged += OnJobsChanged;
         RefreshFfmpeg();
@@ -91,6 +95,20 @@ public sealed class MainViewModel : ObservableObject
     // Sample rate is fixed at 24 kHz (Rust's own voice chat rate) - not user-configurable. 48 kHz produces a
     // structurally valid .rvoice file, but confirmed in-game testing shows the NPC plays it back silently.
     private const int FixedSampleRate = 24000;
+
+    public bool IsDarkTheme
+    {
+        get => _isDarkTheme;
+        set
+        {
+            if (Set(ref _isDarkTheme, value))
+            {
+                ThemeManager.Apply(value);
+                _settings.DarkTheme = value;
+                _settings.Save();
+            }
+        }
+    }
 
     public bool VoiceMode
     {
@@ -525,6 +543,7 @@ public sealed class MainViewModel : ObservableObject
         }
 
         _settings.BitrateKbps = _bitrateKbps;
+        _settings.DarkTheme = _isDarkTheme;
         _settings.VoiceMode = _voiceMode;
         _settings.VolumePercent = _volumePercent;
         _settings.Normalize = _normalize;

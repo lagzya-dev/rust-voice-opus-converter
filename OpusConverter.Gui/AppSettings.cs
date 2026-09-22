@@ -9,6 +9,7 @@ public sealed class AppSettings
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "OpusConverter");
 
     public int BitrateKbps { get; set; } = 48;
+    public bool DarkTheme { get; set; } = true;
     public bool VoiceMode { get; set; }
     public double VolumePercent { get; set; } = 100;
     public bool Normalize { get; set; }

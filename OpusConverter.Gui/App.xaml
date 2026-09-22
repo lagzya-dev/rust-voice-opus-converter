@@ -5,6 +5,8 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
+                <!-- Index 0 is the active palette; ThemeManager replaces this entry to switch theme. Dark by default. -->
+                <ResourceDictionary Source="Palette.Dark.xaml"/>
                 <ResourceDictionary Source="Theme.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
