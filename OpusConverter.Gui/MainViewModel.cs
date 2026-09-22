@@ -93,8 +93,22 @@ public sealed class MainViewModel : ObservableObject
     public int SampleRate
     {
         get => _sampleRate;
-        set => Set(ref _sampleRate, value);
+        set
+        {
+            if (Set(ref _sampleRate, value))
+            {
+                Raise(nameof(SampleRateWarning));
+            }
+        }
     }
+
+    /// <summary>
+    /// Non-empty when the chosen rate is known to fail in game: on 48 kHz the NPC spawns but stays silent, even
+    /// though the file itself is a valid Opus/.rvoice file (confirmed by testing in Rust, not by the game rejecting
+    /// the packet). 24 kHz is what Rust's own voice chat uses and is always safe.
+    /// </summary>
+    public string SampleRateWarning =>
+        _sampleRate == 48000 ? "48 кГц не работает в игре: NPC появляется, но молчит. Выберите 24 кГц." : "";
 
     public bool VoiceMode
     {

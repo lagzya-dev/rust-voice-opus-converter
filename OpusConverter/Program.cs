@@ -11,6 +11,7 @@ Options:
   -o, --output <path>     Output .rvoice file (one input) or folder (several). Default: next to the current folder, named after the input.
   -b, --bitrate <kbps>    Opus bitrate, 8-256. Default 48.
   -r, --sample-rate <hz>  12000, 16000, 24000 or 48000. Default 24000 (what Steam voice uses).
+                          Keep 24000 for Rust: 48000 produces a valid file, but the in-game NPC stays silent.
   -m, --mode <music|voice> Encoder tuning. Default music.
   -v, --volume <x>        Volume multiplier, e.g. 0.5 or 1.5. Default 1.
   -n, --normalize         Even out loudness (EBU R128).

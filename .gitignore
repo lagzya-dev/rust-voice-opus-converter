@@ -15,3 +15,6 @@ Thumbs.db
 
 # Local settings / secrets
 *.local.json
+
+# Throwaway local scratch projects (e.g. quick ViewModel probes)
+.scratch/
