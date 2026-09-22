@@ -36,6 +36,26 @@ winget install Gyan.FFmpeg
 4. Скопируйте `.rvoice` файлы в `carbon/data/OpusVoice/` на сервере.
 5. В игре: `/vplay <имя> [me|all|near|ник]`, `/vstop [id|all]`, `/vlist`.
 
+### API для других плагинов
+
+`OpusVoice` можно дёргать из другого Carbon-плагина. Важно: в Carbon `Call`/`CallHook`/`Interface.Oxide.CallHook`
+находят только непубличные методы с именем реального хука или **публичные методы с атрибутом `[HookMethod]`**
+(это проверено по декомпилированному `Carbon.Base.BaseHookable.BuildHookCache` и `Carbon.Hooks.HookCallerInternal.CallHook`) —
+обычный `public` метод без атрибута попадёт мимо, и вызов молча вернёт `null`. У `OpusVoice.cs` нужный атрибут уже
+стоит на всех трёх методах API, это закреплено тестом [`PluginApiTests`](OpusVoice.Tests/PluginApiTests.cs).
+
+```csharp
+// С типизированной ссылкой (рекомендуется — опечатка в имени станет ошибкой компиляции):
+[PluginReference] private Plugin OpusVoice;
+int streamId = OpusVoice?.Call<int>("PlayVoiceFile", "siren", player) ?? -1;
+
+// Или через Interface.Oxide.CallHook:
+int streamId = (int)(Interface.Oxide.CallHook("PlayVoiceFile", "siren", player) ?? -1);
+```
+
+Доступные методы: `PlayVoiceFile(string file, BasePlayer target)`, `PlayVoiceFileForAll(string file)`,
+`StopVoiceStream(int id)` — все возвращают id потока (или `-1`/`false` при ошибке), как и одноимённые команды.
+
 Консольный вариант:
 
 ```bash

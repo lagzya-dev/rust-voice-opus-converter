@@ -415,12 +415,25 @@ namespace Carbon.Plugins
 
 		#endregion
 
+		// Carbon only routes Call()/CallHook()/Interface.Oxide.CallHook() through methods it has cached as hooks:
+		// non-public methods matching a known hook name, or public methods tagged [HookMethod] (see BaseHookable.
+		// BuildHookCache / HookCallerInternal.CallHook). A plain public method with no attribute is invisible to
+		// that system and silently returns null when called this way, so every method below needs [HookMethod].
 		#region Public API
 
 		/// <summary>
 		/// Plays a converted voice file for one player: an NPC sitting on an invisible chair attached to that player.
-		/// Other plugins can call plugin.Call("PlayVoiceFile", file, player); returns the stream id, or -1 on failure.
+		/// Returns the stream id, or -1 on failure (bad file name, player not connected/dead/sleeping, ...).
+		///
+		/// From another plugin:
+		/// <code>
+		/// int id = (int)(Interface.Oxide.CallHook("PlayVoiceFile", "siren", player) ?? -1);
+		/// // or, with a typed reference (recommended - same call, but you get a compile error instead of a typo):
+		/// [PluginReference] private Plugin OpusVoice;
+		/// int id = OpusVoice?.Call&lt;int&gt;("PlayVoiceFile", "siren", player) ?? -1;
+		/// </code>
 		/// </summary>
+		[HookMethod]
 		public int PlayVoiceFile(string file, BasePlayer target)
 		{
 			string error;
@@ -435,6 +448,7 @@ namespace Carbon.Plugins
 		}
 
 		/// <summary>Plays a converted voice file for every connected player. Returns the stream id, or -1 on failure.</summary>
+		[HookMethod]
 		public int PlayVoiceFileForAll(string file)
 		{
 			var targets = new List<BasePlayer>();
@@ -454,7 +468,8 @@ namespace Carbon.Plugins
 			return stream.Id;
 		}
 
-		/// <summary>Stops a stream started with PlayVoiceFile. Returns true if it was playing.</summary>
+		/// <summary>Stops a stream started with PlayVoiceFile/PlayVoiceFileForAll. Returns true if it was playing.</summary>
+		[HookMethod]
 		public bool StopVoiceStream(int id) => StopStream(id);
 
 		#endregion
