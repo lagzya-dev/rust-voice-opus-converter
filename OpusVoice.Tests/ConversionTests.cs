@@ -443,12 +443,12 @@ namespace OpusVoice.Tests
         [Fact]
         public void ParsesInputsAndOptions()
         {
-            CliArguments cli = ArgumentParser.Parse(new[] { "a.mp3", "https://x/y.mp3", "-o", "out", "-b", "64", "-r", "48000", "-v", "1,5", "-n", "-m", "voice", "-s", "00:00:05", "-t", "20" });
+            CliArguments cli = ArgumentParser.Parse(new[] { "a.mp3", "https://x/y.mp3", "-o", "out", "-b", "64", "-v", "1,5", "-n", "-m", "voice", "-s", "00:00:05", "-t", "20" });
 
             Assert.Equal(new[] { "a.mp3", "https://x/y.mp3" }, cli.Inputs);
             Assert.Equal("out", cli.Output);
             Assert.Equal(64, cli.Options.BitrateKbps);
-            Assert.Equal(48000, cli.Options.SampleRate);
+            Assert.Equal(24000, cli.Options.SampleRate); // fixed - Rust's voice chat rate, not user-configurable
             Assert.Equal(1.5, cli.Options.Volume);
             Assert.True(cli.Options.Normalize);
             Assert.Equal(EncodeMode.Voice, cli.Options.Mode);
@@ -459,7 +459,6 @@ namespace OpusVoice.Tests
         [Theory]
         [InlineData("-b", "1")]
         [InlineData("-b", "abc")]
-        [InlineData("-r", "44100")]
         [InlineData("-v", "0")]
         [InlineData("-m", "loud")]
         public void RejectsBadValues(string option, string value)

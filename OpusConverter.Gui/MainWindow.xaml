@@ -229,20 +229,6 @@
                                 Value="{Binding BitrateKbps}"/>
                         <TextBlock Text="{Binding BitrateText}" Foreground="{StaticResource MutedBrush}" FontSize="12"/>
 
-                        <TextBlock Text="Частота" Style="{StaticResource FieldLabel}"/>
-                        <WrapPanel>
-                            <RadioButton x:Name="Rate12" Style="{StaticResource Chip}" Content="12 кГц" Tag="12000" GroupName="rate" Click="Rate_Click"/>
-                            <RadioButton x:Name="Rate16" Style="{StaticResource Chip}" Content="16 кГц" Tag="16000" GroupName="rate" Click="Rate_Click"/>
-                            <RadioButton x:Name="Rate24" Style="{StaticResource Chip}" Content="24 кГц" Tag="24000" GroupName="rate" Click="Rate_Click"/>
-                            <RadioButton x:Name="Rate48" Style="{StaticResource Chip}" Content="48 кГц" Tag="48000" GroupName="rate" Click="Rate_Click"
-                                         ToolTip="В игре NPC не издаёт звука на этой частоте — проверено на практике"/>
-                        </WrapPanel>
-                        <TextBlock Style="{StaticResource Hint}" Margin="0,-2,0,0"
-                                   Text="24 кГц — родная частота голосового чата Rust, используйте её."/>
-                        <TextBlock Foreground="{StaticResource ErrorBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0"
-                                   Visibility="{Binding SampleRateWarning, Converter={StaticResource EmptyToCollapsed}}"
-                                   Text="{Binding SampleRateWarning}"/>
-
                         <TextBlock Text="Тип звука" Style="{StaticResource FieldLabel}"/>
                         <WrapPanel>
                             <RadioButton x:Name="ModeMusic" Style="{StaticResource Chip}" Content="Музыка" GroupName="mode" Click="Mode_Click"/>

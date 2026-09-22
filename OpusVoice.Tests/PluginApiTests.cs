@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
@@ -10,11 +9,11 @@ using Xunit;
 namespace OpusVoice.Tests
 {
     /// <summary>
-    /// Carbon only routes Call()/CallHook()/Interface.Oxide.CallHook() through methods it has cached as hooks:
-    /// non-public methods matching a known hook name, or public methods tagged [HookMethod]
-    /// (Carbon.Base.BaseHookable.BuildHookCache / Carbon.Hooks.HookCallerInternal.CallHook, verified by decompiling
-    /// Carbon). A public method without the attribute is invisible to that system: calling it this way returns null
-    /// without ever running the method. This test guards the plugin's cross-plugin API against that trap.
+    /// Carbon only routes Call()/CallHook()/Interface.Oxide.CallHook() to methods it has cached as hooks. Per
+    /// Carbon.Base.BaseHookable.BuildHookCache (verified by decompiling Carbon), that cache is built from every
+    /// non-public instance method - any name - plus public methods explicitly tagged [HookMethod]. A plain public
+    /// method with no attribute is invisible to it. This plugin follows the same convention as its other hooks
+    /// (e.g. OnPlayerDisconnected) and keeps its cross-plugin API methods private; this test guards that.
     ///
     /// It reads the compiled plugin's raw metadata (System.Reflection.Metadata) instead of using typeof/reflection,
     /// so it never has to load CarbonPlugin's base types (Plugin, BaseHookable, ...) into this process - those live
@@ -27,7 +26,7 @@ namespace OpusVoice.Tests
         [InlineData("PlayVoiceFile")]
         [InlineData("PlayVoiceFileForAll")]
         [InlineData("StopVoiceStream")]
-        public void ApiMethod_IsPublicAndTaggedHookMethod_SoOtherPluginsCanCallIt(string methodName)
+        public void ApiMethod_IsNonPublic_SoCarbonCanCallItAcrossPlugins(string methodName)
         {
             // SteamVoicePacker lives in the same compiled assembly as Carbon.Plugins.OpusVoice (both come from
             // plugin/OpusVoice.cs via OpusVoice.PluginCheck), and referencing it does not touch any Carbon type.
@@ -39,13 +38,10 @@ namespace OpusVoice.Tests
 
             MethodDefinition method = FindMethod(reader, "Carbon.Plugins", "OpusVoice", methodName);
 
-            Assert.True((method.Attributes & MethodAttributes.Public) != 0, $"{methodName} must be public to be called from another plugin's code.");
-
-            bool hasHookMethodAttribute = method.GetCustomAttributes()
-                .Select(reader.GetCustomAttribute)
-                .Any(ca => AttributeTypeName(reader, ca) == "HookMethodAttribute");
-            Assert.True(hasHookMethodAttribute,
-                $"{methodName} is public but not tagged [HookMethod], so Carbon's Call()/CallHook() will silently return null instead of running it.");
+            bool isPublic = (method.Attributes & MethodAttributes.Public) != 0;
+            Assert.False(isPublic,
+                $"{methodName} is public. In Carbon, a public method needs [HookMethod] to be callable via Call()/CallHook() - " +
+                "making it private/internal/protected instead (like the plugin's other hooks) is simpler and needs no attribute.");
         }
 
         private static MethodDefinition FindMethod(MetadataReader reader, string ns, string typeName, string methodName)
@@ -71,24 +67,6 @@ namespace OpusVoice.Tests
             }
 
             throw new InvalidOperationException($"Type {ns}.{typeName} was not found in the compiled plugin assembly.");
-        }
-
-        /// <summary>Name of the type that declares a custom attribute's constructor, e.g. "HookMethodAttribute".</summary>
-        private static string AttributeTypeName(MetadataReader reader, CustomAttribute attribute)
-        {
-            EntityHandle parent = attribute.Constructor.Kind switch
-            {
-                HandleKind.MemberReference => reader.GetMemberReference((MemberReferenceHandle)attribute.Constructor).Parent,
-                HandleKind.MethodDefinition => reader.GetMethodDefinition((MethodDefinitionHandle)attribute.Constructor).GetDeclaringType(),
-                _ => default,
-            };
-
-            return parent.Kind switch
-            {
-                HandleKind.TypeReference => reader.GetString(reader.GetTypeReference((TypeReferenceHandle)parent).Name),
-                HandleKind.TypeDefinition => reader.GetString(reader.GetTypeDefinition((TypeDefinitionHandle)parent).Name),
-                _ => null,
-            };
         }
     }
 }

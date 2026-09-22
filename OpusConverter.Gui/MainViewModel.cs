@@ -26,7 +26,6 @@ public sealed class MainViewModel : ObservableObject
     private string _outputDirectory;
     private bool _outputIsTemporary;
     private int _bitrateKbps;
-    private int _sampleRate;
     private bool _voiceMode;
     private double _volumePercent;
     private bool _normalize;
@@ -44,7 +43,6 @@ public sealed class MainViewModel : ObservableObject
         _settings = AppSettings.Load();
         _outputDirectory = _settings.OutputDirectory;
         _bitrateKbps = _settings.BitrateKbps;
-        _sampleRate = _settings.SampleRate;
         _voiceMode = _settings.VoiceMode;
         _volumePercent = _settings.VolumePercent;
         _normalize = _settings.Normalize;
@@ -90,25 +88,9 @@ public sealed class MainViewModel : ObservableObject
 
     public string BitrateText => $"{_bitrateKbps} кбит/с  ·  около {(int)(_bitrateKbps * 7.5)} КБ на минуту";
 
-    public int SampleRate
-    {
-        get => _sampleRate;
-        set
-        {
-            if (Set(ref _sampleRate, value))
-            {
-                Raise(nameof(SampleRateWarning));
-            }
-        }
-    }
-
-    /// <summary>
-    /// Non-empty when the chosen rate is known to fail in game: on 48 kHz the NPC spawns but stays silent, even
-    /// though the file itself is a valid Opus/.rvoice file (confirmed by testing in Rust, not by the game rejecting
-    /// the packet). 24 kHz is what Rust's own voice chat uses and is always safe.
-    /// </summary>
-    public string SampleRateWarning =>
-        _sampleRate == 48000 ? "48 кГц не работает в игре: NPC появляется, но молчит. Выберите 24 кГц." : "";
+    // Sample rate is fixed at 24 kHz (Rust's own voice chat rate) - not user-configurable. 48 kHz produces a
+    // structurally valid .rvoice file, but confirmed in-game testing shows the NPC plays it back silently.
+    private const int FixedSampleRate = 24000;
 
     public bool VoiceMode
     {
@@ -362,7 +344,7 @@ public sealed class MainViewModel : ObservableObject
 
     private ConvertOptions BuildOptions() => new()
     {
-        SampleRate = _sampleRate,
+        SampleRate = FixedSampleRate,
         BitrateKbps = _bitrateKbps,
         Volume = _volumePercent / 100.0,
         Normalize = _normalize,
@@ -543,7 +525,6 @@ public sealed class MainViewModel : ObservableObject
         }
 
         _settings.BitrateKbps = _bitrateKbps;
-        _settings.SampleRate = _sampleRate;
         _settings.VoiceMode = _voiceMode;
         _settings.VolumePercent = _volumePercent;
         _settings.Normalize = _normalize;

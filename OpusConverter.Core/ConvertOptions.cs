@@ -10,12 +10,10 @@ public enum EncodeMode
 public sealed class ConvertOptions
 {
     /// <summary>
-    /// Sample rates Opus can encode that Steam's voice decoder (11025-48000 Hz) also accepts as a packet header value.
-    /// 48000 is listed for completeness and produces a structurally valid .rvoice file, but confirmed in-game testing
-    /// shows Rust's client plays it back silently at that rate — 24000 (Rust's own voice chat rate) is what actually works.
+    /// 24000 Hz - Rust's own voice chat rate - is the only value the GUI/CLI ever set. Opus itself, and this
+    /// property, accept other rates too (kept settable for the encoder's own tests), but confirmed in-game testing
+    /// showed 48000 Hz produces a structurally valid .rvoice file that Rust's client plays back silently.
     /// </summary>
-    public static readonly int[] SupportedSampleRates = { 12000, 16000, 24000, 48000 };
-
     public int SampleRate { get; set; } = 24000;
     public int BitrateKbps { get; set; } = 48;
     public double Volume { get; set; } = 1.0;

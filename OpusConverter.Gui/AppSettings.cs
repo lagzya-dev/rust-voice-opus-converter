@@ -9,7 +9,6 @@ public sealed class AppSettings
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "OpusConverter");
 
     public int BitrateKbps { get; set; } = 48;
-    public int SampleRate { get; set; } = 24000;
     public bool VoiceMode { get; set; }
     public double VolumePercent { get; set; } = 100;
     public bool Normalize { get; set; }
@@ -58,11 +57,6 @@ public sealed class AppSettings
     private AppSettings Sanitized()
     {
         BitrateKbps = Math.Clamp(BitrateKbps, 16, 128);
-        if (!ConvertOptions.SupportedSampleRates.Contains(SampleRate))
-        {
-            SampleRate = 24000;
-        }
-
         VolumePercent = Math.Clamp(VolumePercent, 25, 300);
         if (string.IsNullOrWhiteSpace(OutputDirectory))
         {

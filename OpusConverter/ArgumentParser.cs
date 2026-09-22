@@ -45,15 +45,6 @@ public static class ArgumentParser
                 case "--bitrate":
                     o.BitrateKbps = ParseInt(arg, Next(), 8, 256);
                     break;
-                case "-r":
-                case "--sample-rate":
-                    o.SampleRate = ParseInt(arg, Next(), 1, 48000);
-                    if (!ConvertOptions.SupportedSampleRates.Contains(o.SampleRate))
-                    {
-                        throw new ArgumentException($"Sample rate must be one of: {string.Join(", ", ConvertOptions.SupportedSampleRates)}.");
-                    }
-
-                    break;
                 case "-v":
                 case "--volume":
                     o.Volume = ParseDouble(arg, Next(), 0.01, 10);

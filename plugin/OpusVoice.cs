@@ -26,8 +26,8 @@ namespace Carbon.Plugins
 		private const string SpeakerPrefab = "assets/prefabs/player/player.prefab";
 		private const string ChairPrefab = "assets/bundled/prefabs/static/chair.invisible.static.prefab";
 
-		// The chair is attached to the listener one meter behind them, so the NPC stays out of sight.
-		private static readonly Vector3 ChairOffset = new Vector3(0f, 0f, -1f);
+		// The chair is attached to the listener 5 meters below and 3 meters behind them, so the NPC stays out of sight.
+		private static readonly Vector3 ChairOffset = new Vector3(0f, -5f, -3f);
 
 		private const float NearRadius = 30f;
 
@@ -35,7 +35,7 @@ namespace Carbon.Plugins
 		private const int FramesPerPacket = 3;
 
 		// Audio is sent this far ahead of real time; the NPC is removed this long after the last frame is due.
-		private const double LeadSeconds = 0.1;
+		private const double LeadSeconds = 1;
 
 		#endregion
 
@@ -415,10 +415,11 @@ namespace Carbon.Plugins
 
 		#endregion
 
-		// Carbon only routes Call()/CallHook()/Interface.Oxide.CallHook() through methods it has cached as hooks:
-		// non-public methods matching a known hook name, or public methods tagged [HookMethod] (see BaseHookable.
-		// BuildHookCache / HookCallerInternal.CallHook). A plain public method with no attribute is invisible to
-		// that system and silently returns null when called this way, so every method below needs [HookMethod].
+		// Carbon only routes Call()/CallHook()/Interface.Oxide.CallHook() to methods it has cached as hooks. Per
+		// BaseHookable.BuildHookCache, that cache is built from every non-public instance method (any name) plus
+		// public methods explicitly tagged [HookMethod] - a plain public method with no attribute is invisible to
+		// it. Keeping these private (like every other hook in this file, e.g. OnPlayerDisconnected below) is the
+		// same convention the rest of the plugin already follows, and needs no attribute.
 		#region Public API
 
 		/// <summary>
@@ -433,8 +434,7 @@ namespace Carbon.Plugins
 		/// int id = OpusVoice?.Call&lt;int&gt;("PlayVoiceFile", "siren", player) ?? -1;
 		/// </code>
 		/// </summary>
-		[HookMethod]
-		public int PlayVoiceFile(string file, BasePlayer target)
+		private int PlayVoiceFile(string file, BasePlayer target)
 		{
 			string error;
 			VoiceStream stream = Play(file, new List<BasePlayer> { target }, out error);
@@ -448,8 +448,7 @@ namespace Carbon.Plugins
 		}
 
 		/// <summary>Plays a converted voice file for every connected player. Returns the stream id, or -1 on failure.</summary>
-		[HookMethod]
-		public int PlayVoiceFileForAll(string file)
+		private int PlayVoiceFileForAll(string file)
 		{
 			var targets = new List<BasePlayer>();
 			foreach (BasePlayer player in BasePlayer.activePlayerList)
@@ -469,8 +468,7 @@ namespace Carbon.Plugins
 		}
 
 		/// <summary>Stops a stream started with PlayVoiceFile/PlayVoiceFileForAll. Returns true if it was playing.</summary>
-		[HookMethod]
-		public bool StopVoiceStream(int id) => StopStream(id);
+		private bool StopVoiceStream(int id) => StopStream(id);
 
 		#endregion
 

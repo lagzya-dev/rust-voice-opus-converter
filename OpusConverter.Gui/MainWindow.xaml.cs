@@ -90,11 +90,6 @@ public partial class MainWindow : Window
     /// <summary>Radio buttons are plain toggles; this mirrors the saved settings into them once at startup.</summary>
     private void SyncChips()
     {
-        foreach (RadioButton chip in new[] { Rate12, Rate16, Rate24, Rate48 })
-        {
-            chip.IsChecked = int.Parse((string)chip.Tag) == _vm.SampleRate;
-        }
-
         ModeMusic.IsChecked = _vm.MusicMode;
         ModeVoice.IsChecked = _vm.VoiceMode;
     }
@@ -235,9 +230,6 @@ public partial class MainWindow : Window
     private void ClearFinished_Click(object sender, RoutedEventArgs e) => _vm.ClearFinished();
 
     // ---- settings ------------------------------------------------------------------------------------------------------
-
-    private void Rate_Click(object sender, RoutedEventArgs e) =>
-        _vm.SampleRate = int.Parse((string)((RadioButton)sender).Tag);
 
     private void Mode_Click(object sender, RoutedEventArgs e) => _vm.VoiceMode = ReferenceEquals(sender, ModeVoice);
 
