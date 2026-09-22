@@ -541,6 +541,11 @@ namespace Carbon.Plugins
 
 			_streams.Add(stream);
 			EnsureTimer();
+
+			// Send the first batch right now instead of waiting for the next scheduled tick (up to ~20 ms away):
+			// the client already has the NPC's entity data by this point (SpawnFor above), so there is nothing left
+			// to wait for.
+			SendDue(stream, Now);
 			return stream;
 		}
 
