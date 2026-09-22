@@ -1,0 +1,17 @@
+# Build outputs
+bin/
+obj/
+publish/
+*.user
+
+# IDE
+.vs/
+.idea/
+*.suo
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Local settings / secrets
+*.local.json

@@ -1,0 +1,323 @@
+<Window x:Class="OpusConverter.Gui.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:OpusConverter.Gui"
+        Title="Opus Converter — аудио для голосового чата Rust"
+        Width="1080" Height="820" MinWidth="940" MinHeight="660"
+        Background="{StaticResource WindowBrush}"
+        FontFamily="Segoe UI" FontSize="13" Foreground="{StaticResource TextBrush}"
+        UseLayoutRounding="True" TextOptions.TextFormattingMode="Ideal"
+        AllowDrop="True" DragEnter="Window_DragOver" DragOver="Window_DragOver" DragLeave="Window_DragLeave" Drop="Window_Drop"
+        PreviewKeyDown="Window_PreviewKeyDown" Closing="Window_Closing" Loaded="Window_Loaded">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <local:InverseBoolToVisibilityConverter x:Key="InvBoolToVis"/>
+
+        <Style x:Key="StatusText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource MutedBrush}"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding State}" Value="Done">
+                    <Setter Property="Foreground" Value="{StaticResource OkBrush}"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="Failed">
+                    <Setter Property="Foreground" Value="{StaticResource ErrorBrush}"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="Working">
+                    <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <DataTemplate x:Key="JobTemplate" DataType="{x:Type local:JobItem}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="30"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="230"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Text="{Binding Icon}" FontFamily="{StaticResource IconFont}" FontSize="18"
+                           Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center"/>
+
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,12,0">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBox Text="{Binding Name, UpdateSourceTrigger=LostFocus}" IsEnabled="{Binding IsEditable}"
+                                 MinWidth="60" MaxWidth="330" Padding="6,3" BorderThickness="0" Background="Transparent" FontWeight="SemiBold"
+                                 ToolTip="Имя файла. Именно его вводят в игре: /vplay имя"/>
+                        <TextBlock Text=".rvoice" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" Margin="0,0,0,1"/>
+                    </StackPanel>
+                    <TextBlock Text="{Binding Source}" ToolTip="{Binding Source}" Foreground="{StaticResource MutedBrush}" FontSize="11.5"
+                               TextTrimming="CharacterEllipsis" Margin="6,0,0,0"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,10,0" ToolTip="{Binding ErrorDetail}">
+                    <Grid>
+                        <TextBlock Text="{Binding StatusText}" Style="{StaticResource StatusText}" HorizontalAlignment="Left"/>
+                        <TextBlock Text="{Binding Info}" Foreground="{StaticResource MutedBrush}" FontSize="12" HorizontalAlignment="Right"/>
+                    </Grid>
+                    <ProgressBar Value="{Binding Progress, Mode=OneWay}" IsIndeterminate="{Binding IsIndeterminate}" Margin="0,5,0,0"
+                                 Visibility="{Binding ShowProgress, Converter={StaticResource BoolToVis}}"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Style="{StaticResource IconButton}" Click="Preview_Click" ToolTip="Прослушать результат (как услышат игроки)"
+                            IsEnabled="{Binding CanPreview}">
+                        <Button.Content>
+                            <TextBlock>
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="&#xE768;"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsPlaying}" Value="True">
+                                                <Setter Property="Text" Value="&#xE71A;"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Button.Content>
+                    </Button>
+                    <Button Style="{StaticResource IconButton}" Content="&#xE72C;" Click="Retry_Click" ToolTip="Повторить с текущими настройками"
+                            IsEnabled="{Binding CanRetry}"/>
+                    <Button Style="{StaticResource IconButton}" Content="&#xE74D;" Click="Remove_Click" ToolTip="Убрать из списка"
+                            IsEnabled="{Binding IsEditable}"/>
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="24,18,24,12">
+            <TextBlock Text="Opus Converter" FontSize="24" FontWeight="Bold"/>
+            <TextBlock Text="Любое аудио, видео или прямая ссылка → файл .rvoice для плагина OpusVoice (голосовой чат Rust)"
+                       Foreground="{StaticResource MutedBrush}" Margin="0,2,0,0"/>
+        </StackPanel>
+
+        <!-- ffmpeg warning -->
+        <Border Grid.Row="1" Margin="24,0,24,12" Padding="14,10" CornerRadius="10" Background="{StaticResource WarnBackBrush}"
+                BorderBrush="{StaticResource WarnLineBrush}" BorderThickness="1"
+                Visibility="{Binding FfmpegMissing, Converter={StaticResource BoolToVis}}">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="Указать ffmpeg.exe…" Click="ChooseFfmpeg_Click" Margin="0,0,8,0"/>
+                    <Button Content="Где скачать" Click="FfmpegHelp_Click"/>
+                </StackPanel>
+                <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                    <TextBlock Text="Не найден ffmpeg — он нужен, чтобы читать mp3, mp4 и другие форматы" FontWeight="SemiBold"
+                               Foreground="{StaticResource WarnTextBrush}"/>
+                    <TextBlock Foreground="{StaticResource WarnTextBrush}" TextWrapping="Wrap" Margin="0,2,0,0"
+                               Text="Установите его (winget install Gyan.FFmpeg) или положите ffmpeg.exe рядом с программой, либо укажите путь к нему."/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Content -->
+        <Grid Grid.Row="2" Margin="24,0,24,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="350"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Queue -->
+            <Border Grid.Column="0" Style="{StaticResource Card}" Margin="0,0,12,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="Что конвертировать" Style="{StaticResource SectionTitle}"/>
+
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" IsEnabled="{Binding CanEdit}">
+                        <Button Click="AddFiles_Click" Margin="0,0,8,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE710;" FontFamily="{StaticResource IconFont}" Margin="0,1,8,0"/>
+                                <TextBlock Text="Добавить файлы"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Click="AddFolder_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE838;" FontFamily="{StaticResource IconFont}" Margin="0,1,8,0"/>
+                                <TextBlock Text="Добавить папку"/>
+                            </StackPanel>
+                        </Button>
+                        <TextBlock Text="или перетащите их в окно" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                    </StackPanel>
+
+                    <Grid Grid.Row="2" Margin="0,10,0,12" IsEnabled="{Binding CanEdit}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid>
+                            <TextBox x:Name="LinkBox" KeyDown="LinkBox_KeyDown" Padding="12,8"/>
+                            <TextBlock Text="Вставьте прямую ссылку на файл (https://…/song.mp3) и нажмите Enter" IsHitTestVisible="False"
+                                       Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" Margin="14,0,0,0">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Text, ElementName=LinkBox}" Value="">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+                        <Button Grid.Column="1" Content="Добавить ссылку" Click="AddLink_Click" Margin="8,0,0,0"/>
+                    </Grid>
+
+                    <Grid Grid.Row="3">
+                        <ListBox x:Name="Queue" ItemsSource="{Binding Jobs}" ItemTemplate="{StaticResource JobTemplate}"
+                                 ItemContainerStyle="{StaticResource QueueItem}" BorderThickness="0" Background="Transparent"
+                                 HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled"/>
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
+                                    Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="&#xE8D6;" FontFamily="{StaticResource IconFont}" FontSize="40" Foreground="{StaticResource LineStrongBrush}"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock Text="Список пуст" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource MutedBrush}"
+                                       HorizontalAlignment="Center" Margin="0,8,0,2"/>
+                            <TextBlock Text="Перетащите сюда mp3, wav, mp4… или вставьте ссылку" Foreground="{StaticResource MutedBrush}"
+                                       HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="0,10,0,0" IsEnabled="{Binding CanEdit}">
+                        <Button Style="{StaticResource LinkButton}" Content="Убрать готовые" Click="ClearFinished_Click"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Settings -->
+            <Border Grid.Column="1" Style="{StaticResource Card}" Padding="0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="18,18,14,18" IsEnabled="{Binding CanEdit}">
+                    <StackPanel>
+                        <TextBlock Text="Настройки" Style="{StaticResource SectionTitle}"/>
+
+                        <TextBlock Text="Куда сохранять" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Text="{Binding OutputDirectory, UpdateSourceTrigger=LostFocus}" ToolTip="{Binding OutputDirectory}"/>
+                            <Button Grid.Column="1" Content="Обзор…" Click="BrowseOutput_Click" Margin="6,0,0,0" Padding="10,7"/>
+                        </Grid>
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="Укажите папку сервера carbon/data/OpusVoice — тогда файлы сразу будут доступны в игре."/>
+
+                        <TextBlock Text="Качество звука" Style="{StaticResource FieldLabel}"/>
+                        <Slider Minimum="16" Maximum="128" TickFrequency="8" IsSnapToTickEnabled="True" SmallChange="8" LargeChange="16"
+                                Value="{Binding BitrateKbps}"/>
+                        <TextBlock Text="{Binding BitrateText}" Foreground="{StaticResource MutedBrush}" FontSize="12"/>
+
+                        <TextBlock Text="Частота" Style="{StaticResource FieldLabel}"/>
+                        <WrapPanel>
+                            <RadioButton x:Name="Rate12" Style="{StaticResource Chip}" Content="12 кГц" Tag="12000" GroupName="rate" Click="Rate_Click"/>
+                            <RadioButton x:Name="Rate16" Style="{StaticResource Chip}" Content="16 кГц" Tag="16000" GroupName="rate" Click="Rate_Click"/>
+                            <RadioButton x:Name="Rate24" Style="{StaticResource Chip}" Content="24 кГц" Tag="24000" GroupName="rate" Click="Rate_Click"/>
+                            <RadioButton x:Name="Rate48" Style="{StaticResource Chip}" Content="48 кГц" Tag="48000" GroupName="rate" Click="Rate_Click"/>
+                        </WrapPanel>
+                        <TextBlock Style="{StaticResource Hint}" Margin="0,-2,0,0"
+                                   Text="24 кГц — как у обычного голосового чата. 48 кГц звучит чище, но файл больше."/>
+
+                        <TextBlock Text="Тип звука" Style="{StaticResource FieldLabel}"/>
+                        <WrapPanel>
+                            <RadioButton x:Name="ModeMusic" Style="{StaticResource Chip}" Content="Музыка" GroupName="mode" Click="Mode_Click"/>
+                            <RadioButton x:Name="ModeVoice" Style="{StaticResource Chip}" Content="Речь" GroupName="mode" Click="Mode_Click"/>
+                        </WrapPanel>
+
+                        <TextBlock Text="Громкость" Style="{StaticResource FieldLabel}"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="48"/>
+                            </Grid.ColumnDefinitions>
+                            <Slider Minimum="25" Maximum="300" TickFrequency="5" IsSnapToTickEnabled="True" SmallChange="5" LargeChange="25"
+                                    Value="{Binding VolumePercent}" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Text="{Binding VolumeText}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                        </Grid>
+                        <CheckBox Content="Выровнять громкость" IsChecked="{Binding Normalize}" Margin="0,10,0,0"/>
+                        <TextBlock Style="{StaticResource Hint}" Margin="20,2,0,0"
+                                   Text="Тихие и громкие треки будут звучать одинаково. Дольше конвертируется."/>
+
+                        <TextBlock Text="Обрезка (необязательно)" Style="{StaticResource FieldLabel}"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Начало" Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,0,0,4"/>
+                                <TextBox Text="{Binding Start, UpdateSourceTrigger=PropertyChanged}" ToolTip="Секунды (30) или время (1:30)"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Длительность" Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,0,0,4"/>
+                                <TextBox Text="{Binding Duration, UpdateSourceTrigger=PropertyChanged}" ToolTip="Секунды (30) или время (1:30)"/>
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Text="{Binding TrimError}" Foreground="{StaticResource ErrorBrush}" TextWrapping="Wrap" Margin="0,6,0,0" FontSize="12"/>
+                        <TextBlock Style="{StaticResource Hint}" Text="Например: начало 1:30, длительность 20 — вырежет 20 секунд начиная с 1:30."/>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
+        <!-- Log -->
+        <Expander Grid.Row="3" Margin="24,12,24,0" Header="Подробности">
+            <TextBox x:Name="LogBox" Text="{Binding LogText, Mode=OneWay}" IsReadOnly="True" Height="130" FontFamily="Consolas" FontSize="12"
+                     VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" TextWrapping="NoWrap" Margin="0,6,0,0"
+                     TextChanged="LogBox_TextChanged"/>
+        </Expander>
+
+        <!-- Action bar -->
+        <Border Grid.Row="4" Style="{StaticResource Card}" Margin="24,12,24,20" Padding="16,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel VerticalAlignment="Center" Margin="0,0,20,0">
+                    <TextBlock Text="{Binding StatusText}" TextTrimming="CharacterEllipsis" ToolTip="{Binding StatusText}"/>
+                    <ProgressBar Value="{Binding OverallProgress, Mode=OneWay}" Margin="0,8,0,0"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Content="Открыть папку" Click="OpenOutput_Click" Margin="0,0,8,0"/>
+                    <Button Content="Отмена" Click="Cancel_Click" Margin="0,0,8,0"
+                            Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"/>
+                    <Button Style="{StaticResource PrimaryButton}" Content="Конвертировать" Click="Convert_Click" IsEnabled="{Binding CanConvert}"
+                            Visibility="{Binding IsBusy, Converter={StaticResource InvBoolToVis}}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Drag & drop overlay -->
+        <Border x:Name="DropOverlay" Grid.RowSpan="5" Visibility="Collapsed" IsHitTestVisible="False" Margin="12" CornerRadius="16"
+                Background="#E6EEF2FF" BorderBrush="{StaticResource AccentBrush}" BorderThickness="3">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="&#xE896;" FontFamily="{StaticResource IconFont}" FontSize="48" Foreground="{StaticResource AccentBrush}"
+                           HorizontalAlignment="Center"/>
+                <TextBlock Text="Отпустите, чтобы добавить в список" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}"
+                           Margin="0,10,0,0"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

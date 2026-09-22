@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageReference Include="Concentus" Version="2.2.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OpusConverter.Core\OpusConverter.Core.csproj" />
+    <ProjectReference Include="..\OpusConverter\OpusConverter.csproj" />
+    <!-- Builds the plugin against the real game assemblies (a compile check) and exposes SteamVoicePacker. -->
+    <ProjectReference Include="..\OpusVoice.PluginCheck\OpusVoice.PluginCheck.csproj" />
+  </ItemGroup>
+
+</Project>

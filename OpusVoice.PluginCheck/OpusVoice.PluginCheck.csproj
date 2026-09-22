@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Compiles plugin/OpusVoice.cs against the real Rust server / Carbon assemblies, so a plugin that would not compile on the server
+    fails the build here. The game assemblies are not copied to the output (Private=false).
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <NoWarn>CS0436;CS1701;CS1702;CS8981;NU1701;MSB3277</NoWarn>
+    <!-- Folder with the Rust server / Carbon assemblies: dotnet build -p:RustDlls=C:\path -->
+    <RustDlls Condition="'$(RustDlls)' == ''">C:\sdadas\dlls</RustDlls>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\plugin\OpusVoice.cs" Link="OpusVoice.cs" />
+  </ItemGroup>
+
+  <ItemDefinitionGroup>
+    <Reference>
+      <Private>false</Private>
+    </Reference>
+  </ItemDefinitionGroup>
+
+  <ItemGroup>
+    <!-- Game assemblies bind System types (ReadOnlySpan etc.) to Unity's mscorlib, so it has to be resolvable for the compile check. -->
+    <Reference Include="mscorlib"><HintPath>$(RustDlls)\mscorlib.dll</HintPath></Reference>
+    <Reference Include="Assembly-CSharp"><HintPath>$(RustDlls)\Assembly-CSharp.dll</HintPath></Reference>
+    <Reference Include="Assembly-CSharp-firstpass"><HintPath>$(RustDlls)\Assembly-CSharp-firstpass.dll</HintPath></Reference>
+    <Reference Include="Carbon.Common"><HintPath>$(RustDlls)\Carbon.Common.dll</HintPath></Reference>
+    <Reference Include="Carbon.SDK"><HintPath>$(RustDlls)\Carbon.SDK.dll</HintPath></Reference>
+    <Reference Include="Facepunch.Network"><HintPath>$(RustDlls)\Facepunch.Network.dll</HintPath></Reference>
+    <Reference Include="Facepunch.System"><HintPath>$(RustDlls)\Facepunch.System.dll</HintPath></Reference>
+    <Reference Include="Facepunch.UnityEngine"><HintPath>$(RustDlls)\Facepunch.UnityEngine.dll</HintPath></Reference>
+    <Reference Include="Facepunch.Unity"><HintPath>$(RustDlls)\Facepunch.Unity.dll</HintPath></Reference>
+    <Reference Include="Rust.Data"><HintPath>$(RustDlls)\Rust.Data.dll</HintPath></Reference>
+    <Reference Include="Facepunch.Console"><HintPath>$(RustDlls)\Facepunch.Console.dll</HintPath></Reference>
+    <Reference Include="Rust.Global"><HintPath>$(RustDlls)\Rust.Global.dll</HintPath></Reference>
+    <Reference Include="Newtonsoft.Json"><HintPath>$(RustDlls)\Newtonsoft.Json.dll</HintPath></Reference>
+    <Reference Include="UnityEngine.CoreModule"><HintPath>$(RustDlls)\UnityEngine.CoreModule.dll</HintPath></Reference>
+    <Reference Include="UnityEngine.PhysicsModule"><HintPath>$(RustDlls)\UnityEngine.PhysicsModule.dll</HintPath></Reference>
+    <Reference Include="UnityEngine"><HintPath>$(RustDlls)\UnityEngine.dll</HintPath></Reference>
+  </ItemGroup>
+
+</Project>
